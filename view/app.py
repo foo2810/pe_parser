@@ -87,6 +87,9 @@ class App(ttk.Frame):
 	def closeFileHandler(self):
 		self.treeView.clearTree()
 		PEMgr.removeFile(self.pefile)
+		fInfoView = ViewMgr.getView("FileInfo")
+		if fInfoView:
+			fInfoView.insertFile("help.txt")
 	
 	def helpHandler(self):
 		#messagebox.showinfo("Help", "Help")
