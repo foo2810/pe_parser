@@ -1,0 +1,175 @@
+import os
+
+import tkinter as tk
+import tkinter.ttk as ttk
+from tkinter import messagebox
+
+from subsystem.view_mgr import ViewMgr
+from subsystem.pe_mgr import PEMgr
+
+import logo_messages
+
+class DirTreeView(ttk.Frame):
+	def __init__(self, master):
+		super().__init__(master)
+		self.rooNode = None
+		self.isClear = True
+		self.pefile = None
+		self.init()
+	
+	def init(self):
+		self.tree = ttk.Treeview(self)
+		self.tree.column("#0", stretch=True, minwidth=1080)	# minwidthはPCの画面サイズを設定すべき？
+		
+		xsb = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self.tree.xview)
+		ysb = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.tree.yview)
+		self.tree.configure(xscroll=xsb.set, yscroll=ysb.set)
+		self.tree.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W))
+		xsb.grid(column=0, row=1, sticky=(tk.E, tk.W))
+		ysb.grid(column=1, row=0, sticky=(tk.N, tk.S))
+		self.columnconfigure(0, weight=1)
+		self.rowconfigure(0, weight=1)
+		
+		self.tree.heading("#0", text="PE Info", anchor="w")
+		
+		#self.tree.bind("<<TreeviewOpen>>",  self.dirOpenHandler)
+		self.tree.bind("<<TreeviewSelect>>", self.fileSelectHandler)
+		
+		self.rootNode = self.tree.insert("", "end", text="PE Info", values="root", open=True)
+		
+		#self._processDirectory(self.rootNode)
+		
+		
+	def _processDirectory(self, parent, pefile):
+		reader = PEMgr.getReader(pefile)
+		if not reader:
+			messagebox.showinfo("Error", "Failed to get reader")
+			return False
+
+		self.msdosNode = self.tree.insert(parent, "end", text="MSDOS Header", values="MSDOS_HEADER", open=False)
+		self.fNode = self.tree.insert(parent, "end", text="File Header", values="FILE_HEADER", open=False)
+		self. ntNode = self.tree.insert(parent, "end", text="NT Header", values="NT_HEADER", open=False)
+		self.optNode = self.tree.insert(parent, "end", text="Optional Header", values="OPTIONAL_HEADER", open=False)
+		
+		exportFuncList = reader.getExportFuncNameList()
+		self.eTableNode = self.tree.insert(parent, "end", text="Export Table", values="EXPORT_TABLE", open=False)
+		for e in exportFuncList:
+			self.tree.insert(self.eTableNode, "end", text=e, values="EXPORT_TABLE_ENTRY", open=False)
+		
+		importDllList = reader.getImportDllList()
+		self.iTableNode = self.tree.insert(parent, "end", text="Import Table", values="IMPORT_TABLE", open=False)
+		for i in importDllList:
+			node = self.tree.insert(self.iTableNode, "end", text=i, values="IMPORT_TABLE_ENTRY", open=False)
+			for f in reader.getImportFunctionList(i):
+				self.tree.insert(node, "end", text=f, values="IMPORT_TABLE_ENTRY2", open=False)
+				
+		
+		self.rTableNode = self.tree.insert(parent, "end", text="Relocation Table", values="RELOCATION_TABLE", open=False)
+		self.tree.insert(self.rTableNode, "end", text="entry...", values="RELOCATION_TABLE_ENTRY", open=False)		
+	
+		return True
+	
+	def setTree(self, pefile):
+		self.clearTree()
+		if self._processDirectory(self.rootNode, pefile):
+			#self.tree.item(self.rootNode, values=pefile)
+			self.pefile = pefile
+			self.isClear = False
+	
+	def clearTree(self):
+		if not self.isClear:
+			self.tree.delete(self.msdosNode)
+			self.tree.delete(self.fNode)
+			self.tree.delete(self.ntNode)
+			self.tree.delete(self.optNode)
+			self.tree.delete(self.eTableNode)
+			self.tree.delete(self.iTableNode)
+			self.tree.delete(self.rTableNode)
+			
+			self.msdosNode = self.fNode = self.ntNode = self.optNode = self.eTableNode = self.iTableNode = self.rTableNode = None
+			self.tree.item(self.rootNode, values="root")
+
+		self.isClear = True
+		self.pefile = None
+	
+	def dirOpenHandler(self, evt):
+		pass
+	
+	def fileSelectHandler(self, evt):			
+		node = self.tree.selection()
+		type = self.tree.item(node)["values"][0]
+		text = "".join(self.tree.item(node)["text"])
+		
+		#if type == "EXPORT_TABLE" or type == "IMPORT_TABLE" or type == "RELOCATION_TABLE":
+		insertText = None
+		if type == "root":
+			insertText = logo_messages.logo
+		else:
+			insertText = self._getEntryText(type, text)
+		
+		fileInfoView = ViewMgr.getView("FileInfo")
+		if fileInfoView:
+			fileInfoView.insertText(insertText)
+	
+	def _getEntryText(self, type, value=""):
+		if self.pefile is None:
+			return ""
+		
+		peReader = PEMgr.getReader(self.pefile)
+		
+		if not peReader:
+			return ""
+		
+		text = None
+		
+		if type == "EXPORT_TABLE":
+			text = type
+		elif type == "EXPORT_TABLE_ENTRY":
+			text = "VRVA: {:#018x}".format(peReader.getExportFuncAddr(value))
+		elif type == "IMPORT_TABLE":
+			text = type
+		elif type == "IMPORT_TABLE_ENTRY":
+			dllInfo = peReader.getImportDllInfo(value)
+			strs = list()
+			for k in dllInfo.keys():
+				strs.append("{}: {}\n".format(k, dllInfo[k]))
+			text = "".join(strs)
+		elif type == "IMPORT_TABLE_ENTRY2":
+			funcInfo = peReader.getImportFunctionInfo(value)
+			strs = list()
+			for k in funcInfo.keys():
+				strs.append("{}: {}\n".format(k, funcInfo[k]))
+			text = "".join(strs)
+		elif type == "RELOCATION_TABLE":
+			text = type
+		elif type == "RELOCATION_TABLE_ENTRY":
+			text = type
+		elif type == "MSDOS_HEADER":
+			header = peReader.getMSDosHeader()
+			strs = list()
+			for k in header.keys():
+				strs.append("{}: {}\n".format(k, header[k]))
+			text = "".join(strs)
+			
+		elif type == "FILE_HEADER":
+			header = peReader.getFileHeader()
+			strs = list()
+			for k in header.keys():
+				strs.append("{}: {}\n".format(k, header[k]))
+			text = "".join(strs)
+		elif type == "NT_HEADER":
+			header = peReader.getNTHeader()
+			strs = list()
+			for k in header.keys():
+				strs.append("{}: {}\n".format(k, header[k]))
+			text = "".join(strs)
+		elif type == "OPTIONAL_HEADER":
+			header = peReader.getOptionalHeader()
+			strs = list()
+			for k in header.keys():
+				strs.append("{}: {}\n".format(k, header[k]))
+			text = "".join(strs)
+		else:
+			text = "Protable Executable"
+		
+		return text
