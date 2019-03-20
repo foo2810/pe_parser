@@ -36,6 +36,7 @@ def main():
 	print(path.name + "\n")
 	
 	peReader = PEParser(str(path))
+	peReader.parse()
 	
 	## Reader
 	if "h" in option or "a" in option:		
