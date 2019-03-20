@@ -327,7 +327,7 @@ class ImageSectionHeader(BinaryReader):
 	def __init__(self, bData, ptr):
 		super().__init__(bData, ptr)
 		
-		self.name = super().readBytes(8)
+		self.name = super().readBytes(8).decode()
 		self.Misc = super().readBytes(4)
 		self.VirtualAddress = byteToIntLE(super().readBytes(4))
 		self.SizeOfRawData = byteToIntLE(super().readBytes(4))
