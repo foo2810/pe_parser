@@ -193,7 +193,7 @@ class ImageOptionalHeader32(BinaryReader):
 		print("-" * 30)
 
 class ImageOptionalHeader64(BinaryReader):
-	# 96 + sizeof(DataDirectory) bytes
+	# 112 + sizeof(DataDirectory) bytes
 	
 	def __init__(self, bData, ptr):
 		super().__init__(bData, ptr)
@@ -287,6 +287,7 @@ class ImageOptionalHeader64(BinaryReader):
 		
 class NTHeader(BinaryReader):
 	# 4 + 20 + 96 + alpha( sizeof(DataDirectory) ) = 120 + alpha bytes
+	# 4 + 20 + 112 + alpha( sizeof(DataDirectory) ) = 136 + alpha bytes
 	
 	def __init__(self, bData, ptr):
 		super().__init__(bData, ptr)
