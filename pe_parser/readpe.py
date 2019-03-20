@@ -114,6 +114,29 @@ class PEReader:
 		
 		return d
 	
+	## About Section Table
+	
+	def getSectionList(self):
+		sectionTable = self.parser.getSectionTable()
+		return list(map(lambda x: x.name, sectionTable))
+	
+	def getSectionHeader(self, sname):
+		sectionTable = self.parser.getSectionTable()
+		for s in sectionTable:
+			if s.name.lower() == sname.lower():
+				sHeader = dict()
+				sHeader["Name"] = s.name
+				sHeader["Misc"] = s.Misc
+				sHeader["VirtualAddress"] = s.VirtualAddress
+				sHeader["SizeOfRawData"] = s.SizeOfRawData
+				sHeader["PointerToRawData"] = s.PointerToRawData
+				sHeader["PointerToRelocations"] = s.PointerToRelocations
+				sHeader["PointerToLinenumbers"] = s.PointerToLinenumbers
+				sHeader["NumberOfRelocations"] = s.NumberOfRelocations
+				sHeader["NumberOfLinenumbers"] = s.NumberOfLinenumbers
+				sHeader["Characteristics"] = s.Characteristics
+				return sHeader
+	
 	## About Import Table
 	
 	def getImportFunctionList(self, dllName):
@@ -177,6 +200,11 @@ class PEReader:
 	def isExported(self, func):
 		exportTable = self.parser.getExportTable()
 		return exportTable.isExported(self.getExportFuncAddr(func))
+	
+	# エクスポートされた関数のvrvaを渡す
+	def getExportName(self, addr):
+		exportTable = self.parser.getExportTable()
+		return exportTable.getExportName(addr)
 	
 	## About Relocation Table
 	
