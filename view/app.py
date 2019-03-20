@@ -19,6 +19,8 @@ class App(ttk.Frame):
 	DEFAULT_WIDTH = 500
 	DEFAULT_HEIGHT = 500
 	def __init__(self):
+		self.pefile = ""
+		
 		super().__init__()
 		self.viewInit()
 		
