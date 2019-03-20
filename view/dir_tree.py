@@ -112,13 +112,13 @@ class DirTreeView(ttk.Frame):
 			# View file info
 			insertText = "Target file: {}".format(self.pefile)
 		else:
-			insertText = self._getEntryText(ntype, text)
+			insertText = self._getEntryText(node, ntype, text)
 		
 		fileInfoView = ViewMgr.getView("FileInfo")
 		if fileInfoView:
 			fileInfoView.insertText(insertText)
 	
-	def _getEntryText(self, ntype, value=""):
+	def _getEntryText(self, node, ntype, value=""):
 		if self.pefile is None:
 			return ""
 		
@@ -131,32 +131,57 @@ class DirTreeView(ttk.Frame):
 		
 		if ntype == "EXPORT_TABLE":
 			text = ntype
+			
 		elif ntype == "EXPORT_TABLE_ENTRY":
 			addr = peReader.getExportFuncAddr(value)
 			text = "{}\n\n+ VRVA: {:#018x}".format(value, addr)
 			if peReader.isExported(value):
 				n = peReader.getExportName(addr)
 				text = "{} (Export to {})".format(text, n)
+				
 		elif ntype == "IMPORT_TABLE":
 			text = ntype
+			
 		elif ntype == "IMPORT_TABLE_ENTRY":
 			dllInfo = peReader.getImportDllInfo(value)
 			strs = list()
 			for k in dllInfo.keys():
-				strs.append("{}: {}\n".format(k, dllInfo[k]))
+				if type(dllInfo[k]) == int:
+					strs.append("{}: {:#018x}\n".format(k, dllInfo[k]))
+				else:
+					strs.append("{}: {}\n".format(k, dllInfo[k]))
 			text = "".join(strs)
+			
 		elif ntype == "IMPORT_TABLE_ENTRY2":
+			parent = self.tree.parent(node)
+			dllVal = "".join(self.tree.item(parent)["text"])
+			dllInfo = peReader.getImportDllInfo(dllVal)
 			funcInfo = peReader.getImportFunctionInfo(value)
 			strs = list()
+			strs.append("+ Dll Info\n\n")
+			for k in dllInfo.keys():
+				if type(dllInfo[k]) == int:
+					strs.append("{}: {:#018x}\n".format(k, dllInfo[k]))
+				else:
+					strs.append("{}: {}\n".format(k, dllInfo[k]))
+			
+			strs.append("\n+ Function Info\n\n")
 			for k in funcInfo.keys():
-				strs.append("{}: {}\n".format(k, funcInfo[k]))
+				if type(funcInfo[k]) == int:
+					strs.append("{}: {:#018x}\n".format(k, funcInfo[k]))
+				else:
+					strs.append("{}: {}\n".format(k, funcInfo[k]))
 			text = "".join(strs)
+			
 		elif ntype == "RELOCATION_TABLE":
 			text = ntype
+			
 		elif ntype == "RELOCATION_TABLE_ENTRY":
 			text = ntype
+			
 		elif ntype == "SECTION_TABLE":
 			text = ntype
+			
 		elif ntype == "SECTION_TABLE_ENTRY":
 			header = peReader.getSectionHeader(value)
 			strs = list()
@@ -166,6 +191,7 @@ class DirTreeView(ttk.Frame):
 				else:
 					strs.append("{}: {}\n".format(k, header[k]))
 			text = "\n".join(strs)
+			
 		elif ntype == "MSDOS_HEADER":
 			header = peReader.getMSDosHeader()
 			strs = list()
@@ -185,6 +211,7 @@ class DirTreeView(ttk.Frame):
 				else:
 					strs.append("{}: {}\n".format(k, header[k]))
 			text = "\n".join(strs)
+			
 		elif ntype == "NT_HEADER":
 			header = peReader.getNTHeader()
 			strs = list()
@@ -194,6 +221,7 @@ class DirTreeView(ttk.Frame):
 				else:
 					strs.append("{}: {}\n".format(k, header[k]))
 			text = "\n".join(strs)
+			
 		elif ntype == "OPTIONAL_HEADER":
 			header = peReader.getOptionalHeader()
 			strs = list()
@@ -203,6 +231,7 @@ class DirTreeView(ttk.Frame):
 				else:
 					strs.append("{}: {}\n".format(k, header[k]))
 			text = "\n".join(strs)
+			
 		else:
 			text = "Protable Executable"
 		
