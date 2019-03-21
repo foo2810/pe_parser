@@ -75,6 +75,18 @@ class App(ttk.Frame):
 		f = filedialog.askopenfilename(filetypes=types)
 		
 		if f != "":
+			def _handler(sof):
+				if sof:
+					tView = ViewMgr.getView("DirTree")
+					if not tView:
+						messagebox.showinfo("Error", "Could not get view(DirTree)")
+						return
+					
+					self.pefile = f
+					tView.setTree(self.pefile)
+			
+			PEMgr.addFileE(f, _handler)
+			"""
 			if not PEMgr.addFile(f):
 				messagebox.showinfo("Error", "Failed to parse")
 				return
@@ -85,6 +97,7 @@ class App(ttk.Frame):
 			
 			self.pefile = f
 			tView.setTree(self.pefile)
+			"""
 	
 	def closeFileHandler(self):
 		self.treeView.clearTree()

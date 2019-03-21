@@ -1,5 +1,6 @@
 
 import os
+from threading import Thread
 from pe_parser.readpe import PEReader
 
 class PEMgr:
@@ -24,6 +25,15 @@ class PEMgr:
 		else:
 			return False
 	
+	@classmethod
+	def addFileE(cls, fname, handler):
+		def _process():
+			sof = cls.addFile(fname)
+			handler(sof)
+		
+		thread = Thread(target=_process)
+		thread.start()
+		
 	@classmethod
 	def removeFile(cls, fname):
 		if fname in cls.readerList:
