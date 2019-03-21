@@ -88,6 +88,7 @@ class DirTreeView(ttk.Frame):
 			self.tree.delete(self.fNode)
 			self.tree.delete(self.ntNode)
 			self.tree.delete(self.optNode)
+			self.tree.delete(self.sTableNode)
 			self.tree.delete(self.eTableNode)
 			self.tree.delete(self.iTableNode)
 			self.tree.delete(self.rTableNode)
