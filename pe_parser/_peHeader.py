@@ -13,12 +13,13 @@ from pe_parser._binary import *
 class ROMImage(Exception):
 	description = "This PE format file is ROM image"
 	def __init__(self, info=""):
+		super().__init__(ROMImage.description)
 		import sys
 		print(ROMImage.description + " - " + info, file=sys.stderr)
 
 class UnknownMagic(Exception):
-	def __init__(self, desc):	
-		super().__init__(desc)
+	def __init__(self):	
+		super().__init__("Unknown magic")
 
 class MSDOSHeader(BinaryReader):
 	# 64bytes
@@ -303,7 +304,7 @@ class NTHeader(BinaryReader):
 		elif super().checkMagic(2) == b"\x07\x01":
 			raise ROMImage
 		else:
-			raise UnknownMagic("Unknown Magic")
+			raise UnknownMagic
 			
 			
 		super().shiftPtr(self.FileHeader.SizeOfOptionalHeader)

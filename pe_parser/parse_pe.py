@@ -10,6 +10,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 from array import array
 from mmap import *
 
@@ -37,9 +38,13 @@ class PEParser:
 		try:
 			self.peHeader = PEHeader(self.bData)
 			self.__loadToMemory(False)
-		except:
+		except (ROMImage, UnknownMagic) as e:
+			sys.stderr.write("{}\n".format(e))
 			return False
-		
+		except (BaseException, Exception) as e:
+			sys.stderr.write("{}\n".format(e))
+			return False
+			
 		return True
 	
 	def getMSDosHeader(self):
