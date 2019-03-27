@@ -109,3 +109,4 @@ venv.bak/
 *.bin
 tkinter_sample/
 test_readpe.py
+proc/
