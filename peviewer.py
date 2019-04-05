@@ -8,3 +8,6 @@ if __name__ == "__main__":
 		sys.fin()
 	except KeyboardInterrupt:
 		sys.fin()
+	except Exception as e:
+		sys.fin()
+		print(" >>> Unexpected error occured\n{}".format(e))
