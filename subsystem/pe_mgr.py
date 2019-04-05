@@ -12,6 +12,14 @@ class PEMgr:
 		print("PE Manager initialized")
 	
 	@classmethod
+	def fin(cls):
+		rl = cls.readerList
+		for f in rl.keys():
+			if rl[f] is None:
+				return
+			cls.removeFile(f)
+	
+	@classmethod
 	def addFile(cls, fname):
 		absPath = os.path.abspath(fname)
 		if os.path.exists(absPath):
@@ -27,6 +35,8 @@ class PEMgr:
 	
 	@classmethod
 	def addFileE(cls, fname, handler):
+	# pe_mgrサブシステムにファイルの追加が完了した後の処理をハンドラとして渡す
+	# ハンドラには依頼した処理の成否が引数で渡される
 		def _process():
 			sof = cls.addFile(fname)
 			handler(sof)

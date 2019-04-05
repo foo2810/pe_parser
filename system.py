@@ -9,9 +9,14 @@ class System:
 		pass
 	
 	def init(self):
-		print("System initialized")
 		self._subSystemInit()
 		self.mainView = App()
+		print("System initialized")
+	
+	def fin(self):
+		PEMgr.fin()
+		ViewMgr.fin()
+		print("System destructed")
 	
 	def _subSystemInit(self):
 		PEMgr.init()

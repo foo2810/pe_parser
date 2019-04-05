@@ -7,6 +7,10 @@ class ViewMgr:
 		print ("View Manager initialized")
 	
 	@classmethod
+	def fin(cls):
+		pass
+	
+	@classmethod
 	def registerView(cls, view, vid):
 		cls.viewList[vid] = view
 	
