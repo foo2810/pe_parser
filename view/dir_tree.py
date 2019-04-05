@@ -69,10 +69,15 @@ class DirTreeView(ttk.Frame):
 			node = self.tree.insert(iTableNode, "end", text=i, values=[None, "IMPORT_TABLE_ENTRY", pefile], open=False)
 			for f in self._reader.getImportFunctionList(i):
 				self.tree.insert(node, "end", text=f, values=[None, "IMPORT_TABLE_ENTRY2", pefile])
-				
 		
+		relocBaseList = self._reader.getBaseRelocationList()
 		rTableNode = self.tree.insert(parent, "end", text="Relocation Table", values=[None, "RELOCATION_TABLE", pefile], open=False)
-		self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
+		for baseReloc in relocBaseList:
+			baseAddr = baseReloc["VirtualAddress"]
+			baseRelocNode = self.tree.insert(rTableNode, "end", text="{:#x}".format(baseAddr), values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)
+			for e in self._reader.getRelocationEntryList(baseAddr):
+				self.tree.insert(baseRelocNode, "end", text="{:#x}".format(e), values=[None, "RELOCATION_TABLE_ENTRY2", pefile], open=False)
+		#self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
 	
 		return True
 	
@@ -196,6 +201,13 @@ class DirTreeView(ttk.Frame):
 			
 		elif ntype == "RELOCATION_TABLE_ENTRY":
 			text = ntype
+		
+		elif ntype == "RELOCATION_TABLE_ENTRY2":
+			parent = self.tree.parent(node)
+			baseRelocAddr = int(self.tree.item(parent)["text"], 16)
+			offset = int(self.tree.item(node)["text"], 16)
+			relocInfo = peReader.getRelocationInfo(baseRelocAddr, offset)
+			text = "Base Address: {:#x}\nType: {}\nOffset: {:#x}".format(baseRelocAddr, relocInfo["TypeText"], offset)
 			
 		elif ntype == "SECTION_TABLE":
 			text = ntype

@@ -53,6 +53,10 @@ class ImageBaseRelocation(BinaryReader):
 		for thunk in self.thunks:
 			thunk.printAll()
 		"""
+	
+	def __iter__(self):
+		for i in self.thunks:
+			yield i
 		
 class RelocationTable:
 	def __init__(self, mapData, ptr, size):

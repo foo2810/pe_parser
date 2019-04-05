@@ -209,11 +209,33 @@ class PEReader:
 	## About Relocation Table
 	
 	def getBaseRelocationList(self):
-		pass
+		relocTable = self.parser.getRelocationTable()
+		baseRelocList = list()
+		for baseReloc in relocTable:
+			e = dict()
+			e["VirtualAddress"] = baseReloc.VirtualAddress
+			e["SizeOfBlock"] = baseReloc.SizeOfBlock
+			e["NumberOfEntry"] = baseReloc.numberOfThunk
+			baseRelocList.append(e)
+		return baseRelocList
 	
 	def getRelocationEntryList(self, base):
-		pass
+		relocTable = self.parser.getRelocationTable()
+		for baseReloc in relocTable:
+			if baseReloc.VirtualAddress == base:
+				return list(map(lambda x: x.offset, baseReloc))
 	
-	def getRelocationInfo(self, base, ord):
-		pass
+	# ImageBaseRelocation.thunksのインデックスをordで渡す
+	def getRelocationInfo(self, base, off):
+		relocTable = self.parser.getRelocationTable()
+		for baseReloc in relocTable:
+			if baseReloc.VirtualAddress == base:
+				for relocTarget in baseReloc:
+					if relocTarget.offset == off:
+						e = {
+							"Type": relocTarget.type,
+							"Offset": relocTarget.offset,
+							"TypeText": relocTarget.typeText,
+						}
+						return e
 	
