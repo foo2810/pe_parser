@@ -15,11 +15,13 @@ import logo_messages
 
 # width=App.DEFAULT_WIDTH, height=App.DEFAULT_HEIGHT
 
+# メインウィンドウに表示するtreeviewとfile_infoをPaneWindowで分割表示するようにする
 class App(ttk.Frame):
 	DEFAULT_WIDTH = 500
 	DEFAULT_HEIGHT = 500
 	def __init__(self):
-		self.pefile = ""
+		#self.pefile = ""
+		self.pefileList = list()		# 複数ファイルの同時表示への対応
 		
 		super().__init__()
 		self.viewInit()
@@ -30,6 +32,8 @@ class App(ttk.Frame):
 
 	def viewInit(self):
 		self.title = "PE Viewer"
+		
+		self.configure(width=App.DEFAULT_WIDTH, height=App.DEFAULT_HEIGHT)
 		
 		self.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W))
 		self.columnconfigure(0, weight=2)
@@ -55,7 +59,9 @@ class App(ttk.Frame):
 		
 		self.fileMenu = tk.Menu(self.menu, tearoff=0)
 		self.fileMenu.add_command(label="Open", command=self.openFileHandler)
-		self.fileMenu.add_command(label="Close", command=self.closeFileHandler)
+		#self.fileMenu.add_command(label="Close", command=self.closeFileHandler(self.pefile))
+		self.closeMenu = tk.Menu(self.fileMenu, tearoff=0)
+		self.fileMenu.add_cascade(label="Close", menu=self.closeMenu)
 		self.fileMenu.add_separator()
 		self.fileMenu.add_command(label="Exit", command=self.master.quit)
 		self.menu.add_cascade(label="File", menu=self.fileMenu)
@@ -82,9 +88,14 @@ class App(ttk.Frame):
 						messagebox.showinfo("Error", "Could not get view(DirTree)")
 						return
 					
-					self.pefile = f
-					tView.setTree(self.pefile)
+					#self.pefile = f
+					tView.setTree(f)
+					
+					# 複数ファイルの同時表示への対応
+					self.pefileList.append(f)
+					self.closeMenu.add_command(label=f, command=self.closeFileHandler(f))
 			
+			# pe_mgrサブシステムにファイルの追加が完了した後の処理をハンドラとして渡す
 			PEMgr.addFileE(f, _handler)
 			"""
 			if not PEMgr.addFile(f):
@@ -99,12 +110,25 @@ class App(ttk.Frame):
 			tView.setTree(self.pefile)
 			"""
 	
-	def closeFileHandler(self):
-		self.treeView.clearTree()
-		PEMgr.removeFile(self.pefile)
-		fInfoView = ViewMgr.getView("FileInfo")
-		if fInfoView:
-			fInfoView.insertFile("help.txt")
+	def closeFileHandler(self, fname):
+		#self.tmp = fname
+		def _handler():
+			nonlocal fname
+			"""
+			if fname == "":
+				return
+			"""
+			
+			self.treeView.clearTree(fname)
+			PEMgr.removeFile(fname)
+			fInfoView = ViewMgr.getView("FileInfo")
+			if fInfoView:
+				fInfoView.insertFile("help.txt")
+			#self.pefile = ""
+			self.pefileList.remove(fname)
+			self.closeMenu.delete(fname)
+			
+		return _handler
 	
 	def helpHandler(self):
 		#messagebox.showinfo("Help", "Help")

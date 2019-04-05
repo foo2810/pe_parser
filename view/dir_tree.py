@@ -12,14 +12,17 @@ import logo_messages
 class DirTreeView(ttk.Frame):
 	def __init__(self, master):
 		super().__init__(master)
-		self.rooNode = None
-		self.isClear = True
-		self.pefile = None
+		#self.rootNode = None
+		#self.isClear = True
+		#self.pefile = None
+		self.fNodeList = dict()	# 複数ファイルの同時表示に対応
 		self.init()
 	
 	def init(self):
 		self.tree = ttk.Treeview(self)
-		self.tree.column("#0", stretch=True, minwidth=1080)	# minwidthはPCの画面サイズを設定すべき？
+		self.tree.column("#0", stretch=True, minwidth=500)	# minwidthはPCの画面サイズを設定すべき？
+		self.tree.configure(columns=["reserved", "kind", "belongs"])
+		self.tree.configure(displaycolumns=[])
 		
 		xsb = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self.tree.xview)
 		ysb = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.tree.yview)
@@ -35,54 +38,66 @@ class DirTreeView(ttk.Frame):
 		#self.tree.bind("<<TreeviewOpen>>",  self.dirOpenHandler)
 		self.tree.bind("<<TreeviewSelect>>", self.fileSelectHandler)
 		
-		self.rootNode = self.tree.insert("", "end", text="PE Info", values="root", open=True)
-		
-		#self._processDirectory(self.rootNode)
-		
+		#self.rootNode = self.tree.insert("", "end", text="PE Info", values=[None, "root", None], open=True)
 		
 	def _processDirectory(self, parent, pefile):
-		reader = PEMgr.getReader(pefile)
-		if not reader:
+		self._reader = PEMgr.getReader(pefile)
+		if not self._reader:
 			messagebox.showinfo("Error", "Failed to get reader")
 			return False
 		
-		self.tree.item(self.rootNode, text=os.path.basename(pefile))
+		self.tree.item(parent, text=os.path.basename(pefile))
 
-		self.msdosNode = self.tree.insert(parent, "end", text="MSDOS Header", values="MSDOS_HEADER", open=False)
-		self.fNode = self.tree.insert(parent, "end", text="File Header", values="FILE_HEADER", open=False)
-		self. ntNode = self.tree.insert(parent, "end", text="NT Header", values="NT_HEADER", open=False)
-		self.optNode = self.tree.insert(parent, "end", text="Optional Header", values="OPTIONAL_HEADER", open=False)
+		msdosNode = self.tree.insert(parent, "end", text="MSDOS Header", values=[None, "MSDOS_HEADER", pefile], open=False)
+		fNode = self.tree.insert(parent, "end", text="File Header", values=[None, "FILE_HEADER", pefile], open=False)
+		ntNode = self.tree.insert(parent, "end", text="NT Header", values=[None, "NT_HEADER", pefile], open=False)
+		optNode = self.tree.insert(parent, "end", text="Optional Header", values=[None, "OPTIONAL_HEADER", pefile], open=False)
 		
-		sectionList = reader.getSectionList()
-		self.sTableNode = self.tree.insert(parent, "end", text="Section Headers", values="SECTION_TABLE", open=False)
+		sectionList = self._reader.getSectionList()
+		sTableNode = self.tree.insert(parent, "end", text="Section Headers", values=[None, "SECTION_TABLE", pefile], open=False)
 		for s in sectionList:
-			self.tree.insert(self.sTableNode, "end", text=s, values="SECTION_TABLE_ENTRY")
+			self.tree.insert(sTableNode, "end", text=s, values=[None, "SECTION_TABLE_ENTRY", pefile])
 		
-		exportFuncList = reader.getExportFuncNameList()
-		self.eTableNode = self.tree.insert(parent, "end", text="Export Table", values="EXPORT_TABLE", open=False)
+		exportFuncList = self._reader.getExportFuncNameList()
+		eTableNode = self.tree.insert(parent, "end", text="Export Table", values=[None, "EXPORT_TABLE", pefile], open=False)
 		for e in exportFuncList:
-			self.tree.insert(self.eTableNode, "end", text=e, values="EXPORT_TABLE_ENTRY")
+			self.tree.insert(eTableNode, "end", text=e, values=[None, "EXPORT_TABLE_ENTRY", pefile])
 		
-		importDllList = reader.getImportDllList()
-		self.iTableNode = self.tree.insert(parent, "end", text="Import Table", values="IMPORT_TABLE", open=False)
+		importDllList = self._reader.getImportDllList()
+		iTableNode = self.tree.insert(parent, "end", text="Import Table", values=[None, "IMPORT_TABLE", pefile], open=False)
 		for i in importDllList:
-			node = self.tree.insert(self.iTableNode, "end", text=i, values="IMPORT_TABLE_ENTRY", open=False)
-			for f in reader.getImportFunctionList(i):
-				self.tree.insert(node, "end", text=f, values="IMPORT_TABLE_ENTRY2")
+			node = self.tree.insert(iTableNode, "end", text=i, values=[None, "IMPORT_TABLE_ENTRY", pefile], open=False)
+			for f in self._reader.getImportFunctionList(i):
+				self.tree.insert(node, "end", text=f, values=[None, "IMPORT_TABLE_ENTRY2", pefile])
 				
 		
-		self.rTableNode = self.tree.insert(parent, "end", text="Relocation Table", values="RELOCATION_TABLE", open=False)
-		self.tree.insert(self.rTableNode, "end", text="entry...", values="RELOCATION_TABLE_ENTRY", open=False)		
+		rTableNode = self.tree.insert(parent, "end", text="Relocation Table", values=[None, "RELOCATION_TABLE", pefile], open=False)
+		self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
 	
 		return True
 	
 	def setTree(self, pefile):
-		self.clearTree()
+		rootNode = self.tree.insert("", "end", text=os.path.basename(pefile), values=[None, "root", pefile], open=True)
+		if self._processDirectory(rootNode, pefile):
+			self.fNodeList[pefile] = rootNode
+			print("{} set".format(pefile))
+		
+		return
+		
+		"""
 		if self._processDirectory(self.rootNode, pefile):
 			self.pefile = pefile
-			self.isClear = False
+		"""
 	
-	def clearTree(self):
+	def clearTree(self, pefile):
+		if pefile in self.fNodeList:
+			rootNode = self.fNodeList[pefile]
+			self.fNodeList[pefile] = None
+			self.tree.delete(rootNode)
+			print("{} deleted".format(pefile))
+		return
+		
+		"""
 		if not self.isClear:
 			self.tree.delete(self.msdosNode)
 			self.tree.delete(self.fNode)
@@ -98,32 +113,34 @@ class DirTreeView(ttk.Frame):
 
 		self.isClear = True
 		self.pefile = None
+		"""
 	
 	def dirOpenHandler(self, evt):
 		pass
 	
-	def fileSelectHandler(self, evt):			
+	def fileSelectHandler(self, evt):
 		node = self.tree.selection()
-		ntype = self.tree.item(node)["values"][0]
+		values = self.tree.item(node)["values"]
+		ntype = values[1]
+		belongs = values[2]
 		text = "".join(self.tree.item(node)["text"])
 		
 		#if ntype == "EXPORT_TABLE" or ntype == "IMPORT_TABLE" or ntype == "RELOCATION_TABLE":
 		insertText = None
 		if ntype == "root":
+			finfo = os.stat(belongs)
 			# View file info
-			insertText = "Target file: {}".format(self.pefile)
+			insertText = "Target file: {}\n".format(belongs)
+			insertText = insertText + "\tsize: {}\n".format(finfo.st_size)
 		else:
-			insertText = self._getEntryText(node, ntype, text)
+			insertText = self._getEntryText(node, ntype, belongs, text)
 		
 		fileInfoView = ViewMgr.getView("FileInfo")
 		if fileInfoView:
 			fileInfoView.insertText(insertText)
 	
-	def _getEntryText(self, node, ntype, value=""):
-		if self.pefile is None:
-			return ""
-		
-		peReader = PEMgr.getReader(self.pefile)
+	def _getEntryText(self, node, ntype, belongs, value=""):
+		peReader = PEMgr.getReader(belongs)
 		
 		if not peReader:
 			return ""
