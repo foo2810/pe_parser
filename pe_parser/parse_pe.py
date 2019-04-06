@@ -23,6 +23,7 @@ from pe_parser._binary import *
 
 class PEParser:
 	def __init__(self, pefile):
+		self.mapData = None
 		self.bData = None
 		self.peHeader = None
 		with open(pefile, "rb") as st:
@@ -33,6 +34,10 @@ class PEParser:
 		self.relocationTable = None
 		
 		self.filename = os.path.abspath(pefile)
+	
+	def __del__(self):
+		if self.mapData is not None:
+			self.mapData.close()
 	
 	def parse(self):
 		try:

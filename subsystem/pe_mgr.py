@@ -5,7 +5,6 @@ from pe_parser.readpe import PEReader
 
 class PEMgr:
 	readerList = dict()
-	currentFile = None
 	
 	@classmethod
 	def init(cls):
@@ -47,6 +46,7 @@ class PEMgr:
 	@classmethod
 	def removeFile(cls, fname):
 		if fname in cls.readerList:
+			#del cls.readerList[fname]
 			cls.readerList[fname] = None
 	
 	@classmethod
@@ -56,14 +56,4 @@ class PEMgr:
 			return cls.readerList[fname]
 		else:
 			return None
-	
-	"""
-	@classmethod
-	def focusFile(cls, fname):
-		fname = os.path.abspath(fname)
-		if fname in cls.reader:
-			cls.currentFile = fname
-			return True
-		else:
-			return False
-	"""
+

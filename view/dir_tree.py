@@ -86,39 +86,19 @@ class DirTreeView(ttk.Frame):
 		if self._processDirectory(rootNode, pefile):
 			self.fNodeList[pefile] = rootNode
 			print("{} set".format(pefile))
-		
-		return
-		
-		"""
-		if self._processDirectory(self.rootNode, pefile):
-			self.pefile = pefile
-		"""
+	
+	def _removeFileTree(self, node):
+		for c in self.tree.get_children(node):
+			self._removeFileTree(c)
+		self.tree.delete(node)
 	
 	def clearTree(self, pefile):
 		if pefile in self.fNodeList:
 			rootNode = self.fNodeList[pefile]
 			self.fNodeList[pefile] = None
-			self.tree.delete(rootNode)
+			#self.tree.delete(rootNode)
+			self._removeFileTree(rootNode)
 			print("{} deleted".format(pefile))
-		return
-		
-		"""
-		if not self.isClear:
-			self.tree.delete(self.msdosNode)
-			self.tree.delete(self.fNode)
-			self.tree.delete(self.ntNode)
-			self.tree.delete(self.optNode)
-			self.tree.delete(self.sTableNode)
-			self.tree.delete(self.eTableNode)
-			self.tree.delete(self.iTableNode)
-			self.tree.delete(self.rTableNode)
-			
-			self.msdosNode = self.fNode = self.ntNode = self.optNode = self.eTableNode = self.iTableNode = self.rTableNode = None
-			self.tree.item(self.rootNode, text="PE Info", values="root")
-
-		self.isClear = True
-		self.pefile = None
-		"""
 	
 	def dirOpenHandler(self, evt):
 		pass
