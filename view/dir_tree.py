@@ -9,6 +9,7 @@ from subsystem.pe_mgr import PEMgr
 
 import logo_messages
 
+
 class DirTreeView(ttk.Frame):
 	def __init__(self, master):
 		super().__init__(master)
@@ -79,6 +80,8 @@ class DirTreeView(ttk.Frame):
 				self.tree.insert(baseRelocNode, "end", text="{:#x}".format(e), values=[None, "RELOCATION_TABLE_ENTRY2", pefile], open=False)
 		#self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
 	
+		self._reader = None
+		
 		return True
 	
 	def setTree(self, pefile):

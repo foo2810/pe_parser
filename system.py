@@ -1,4 +1,6 @@
 
+import gc
+
 from subsystem.view_mgr import ViewMgr
 from subsystem.pe_mgr import PEMgr
 
@@ -21,6 +23,7 @@ class System:
 	def _subSystemInit(self):
 		PEMgr.init()
 		ViewMgr.init()
+		print("GC: {}".format(gc.isenabled()))
 	
 	def run(self):
 		self.mainView.run()
