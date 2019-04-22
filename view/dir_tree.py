@@ -73,12 +73,14 @@ class DirTreeView(ttk.Frame):
 		
 		relocBaseList = self._reader.getBaseRelocationList()
 		rTableNode = self.tree.insert(parent, "end", text="Relocation Table", values=[None, "RELOCATION_TABLE", pefile], open=False)
+		"""
 		for baseReloc in relocBaseList:
 			baseAddr = baseReloc["VirtualAddress"]
 			baseRelocNode = self.tree.insert(rTableNode, "end", text="{:#x}".format(baseAddr), values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)
 			for e in self._reader.getRelocationEntryList(baseAddr):
 				self.tree.insert(baseRelocNode, "end", text="{:#x}".format(e), values=[None, "RELOCATION_TABLE_ENTRY2", pefile], open=False)
-		#self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
+		"""
+		self.tree.insert(rTableNode, "end", text="entry...", values=[None, "RELOCATION_TABLE_ENTRY", pefile], open=False)		
 	
 		self._reader = None
 		
@@ -183,7 +185,10 @@ class DirTreeView(ttk.Frame):
 			text = ntype
 			
 		elif ntype == "RELOCATION_TABLE_ENTRY":
-			text = ntype
+			#text = ntype
+			text = "Relocation Table has too many entries.\n"
+			text = text + "Because of this,　it's slow to add relocation information to directory tree.\n"
+			text = text + "So, these are excluded."
 		
 		elif ntype == "RELOCATION_TABLE_ENTRY2":
 			parent = self.tree.parent(node)
